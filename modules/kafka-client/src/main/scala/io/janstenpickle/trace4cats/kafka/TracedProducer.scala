@@ -11,9 +11,10 @@ import io.janstenpickle.trace4cats.inject.Trace
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
 
 object TracedProducer {
-  def create[F[_], G[_]: Monad: Trace, K, V](producer: KafkaProducer[F, K, V], toHeaders: ToHeaders = ToHeaders.all)(
-    implicit L: Lift[F, G]
-  ): KafkaProducer[G, K, V] =
+  def create[F[_], G[_]: Monad: Trace, K, V](
+    producer: KafkaProducer[F, K, V],
+    toHeaders: ToHeaders = ToHeaders.standard
+  )(implicit L: Lift[F, G]): KafkaProducer[G, K, V] =
     new KafkaProducer[G, K, V] {
       override def produce[P](records: ProducerRecords[P, K, V]): G[G[ProducerResult[P, K, V]]] =
         Trace[G].span("kafka.send", SpanKind.Producer) {
