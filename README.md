@@ -11,7 +11,7 @@ Integration layer for [Trace4Cats] and [FS2 Kafka].
 Add it to your `build.sbt`:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-kafka-client" % "<version>"
+"io.janstenpickle" %% "trace4cats-kafka-client" % "0.12.0-RC2"
 ```
 
 ## Contributing
