@@ -13,7 +13,7 @@ import io.janstenpickle.trace4cats.kafka.{TracedConsumer, TracedProducer}
 trait Fs2KafkaSyntax {
   implicit class ProducerSyntax[F[_], K, V](producer: KafkaProducer[F, K, V]) {
     def liftTrace[G[_]](
-      toHeaders: ToHeaders = ToHeaders.all
+      toHeaders: ToHeaders = ToHeaders.standard
     )(implicit L: Lift[F, G], G: Monad[G], T: Trace[G]): KafkaProducer[G, K, V] =
       TracedProducer.create[F, G, K, V](producer, toHeaders)
   }
