@@ -11,7 +11,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 class KafkaHeadersConverterSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
   behavior.of("KafkaHeaders.converter")
 
-  it should "convert headers isomorphically" in forAll { traceHeaders: TraceHeaders =>
+  it should "convert headers isomorphically" in forAll { (traceHeaders: TraceHeaders) =>
     assert(Eq.eqv(traceHeaders, converter.from(converter.to(traceHeaders))))
   }
 
