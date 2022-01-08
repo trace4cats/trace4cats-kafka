@@ -8,7 +8,7 @@ object Dependencies {
 
     val trace4cats = "0.12.0"
 
-    val fs2Kafka = "2.2.0"
+    val fs2Kafka = "2.3.0"
 
     val kindProjector = "0.13.2"
     val betterMonadicFor = "0.3.1"
