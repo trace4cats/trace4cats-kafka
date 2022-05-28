@@ -1,12 +1,12 @@
-package io.janstenpickle.trace4cats.kafka
+package trace4cats.kafka
 
 import cats.Eq
 import fs2.kafka.{Header, Headers}
-import io.janstenpickle.trace4cats.kafka.KafkaHeaders.converter
-import io.janstenpickle.trace4cats.model.TraceHeaders
-import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import trace4cats.kafka.KafkaHeaders.converter
+import trace4cats.model.TraceHeaders
+import trace4cats.test.ArbitraryInstances
 
 class KafkaHeadersConverterSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
   behavior.of("KafkaHeaders.converter")

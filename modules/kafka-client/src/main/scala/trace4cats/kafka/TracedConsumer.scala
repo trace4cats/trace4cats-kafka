@@ -1,16 +1,15 @@
-package io.janstenpickle.trace4cats.kafka
+package trace4cats.kafka
 
+import cats.Functor
 import cats.effect.kernel.MonadCancelThrow
 import cats.syntax.functor._
-import cats.Functor
 import fs2.Stream
 import fs2.kafka.{CommittableConsumerRecord, CommittableOffset}
-import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.base.context.Provide
-import io.janstenpickle.trace4cats.fs2.TracedStream
-import io.janstenpickle.trace4cats.fs2.syntax.Fs2StreamSyntax
-import io.janstenpickle.trace4cats.inject.{ResourceKleisli, SpanParams, Trace}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
+import trace4cats.context.Provide
+import trace4cats.fs2.TracedStream
+import trace4cats.fs2.syntax.Fs2StreamSyntax
+import trace4cats.model.{AttributeValue, SpanKind}
+import trace4cats.{ResourceKleisli, Span, SpanParams, Trace}
 
 object TracedConsumer extends Fs2StreamSyntax {
 
