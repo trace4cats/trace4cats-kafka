@@ -1,14 +1,13 @@
-package io.janstenpickle.trace4cats.kafka.syntax
+package trace4cats.kafka.syntax
 
 import cats.effect.kernel.MonadCancelThrow
 import cats.{Functor, Monad}
 import fs2.Stream
 import fs2.kafka.{CommittableConsumerRecord, KafkaProducer}
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
-import io.janstenpickle.trace4cats.base.context.{Lift, Provide}
-import io.janstenpickle.trace4cats.fs2.TracedStream
-import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceKleisli, SpanParams, Trace}
-import io.janstenpickle.trace4cats.kafka.{TracedConsumer, TracedProducer}
+import trace4cats.context.{Lift, Provide}
+import trace4cats.fs2.TracedStream
+import trace4cats.kafka.{TracedConsumer, TracedProducer}
+import trace4cats._
 
 trait Fs2KafkaSyntax {
   implicit class ProducerSyntax[F[_], K, V](producer: KafkaProducer[F, K, V]) {

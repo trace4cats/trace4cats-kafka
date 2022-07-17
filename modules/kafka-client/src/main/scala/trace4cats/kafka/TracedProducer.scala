@@ -1,14 +1,13 @@
-package io.janstenpickle.trace4cats.kafka
+package trace4cats.kafka
 
 import cats.data.NonEmptyList
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.{Applicative, Monad}
-import fs2.kafka._
-import io.janstenpickle.trace4cats.ToHeaders
-import io.janstenpickle.trace4cats.base.context.Lift
-import io.janstenpickle.trace4cats.inject.Trace
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
+import fs2.kafka.{KafkaProducer, ProducerRecords, ProducerResult}
+import trace4cats.context.Lift
+import trace4cats.model.{AttributeValue, SpanKind}
+import trace4cats.{ToHeaders, Trace}
 
 object TracedProducer {
   def create[F[_], G[_]: Monad: Trace, K, V](

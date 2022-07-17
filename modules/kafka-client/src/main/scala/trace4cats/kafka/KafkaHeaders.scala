@@ -1,8 +1,8 @@
-package io.janstenpickle.trace4cats.kafka
+package trace4cats.kafka
 
 import cats.syntax.foldable._
 import fs2.kafka.{Header, Headers}
-import io.janstenpickle.trace4cats.model.TraceHeaders
+import trace4cats.model.TraceHeaders
 
 object KafkaHeaders {
   val converter: TraceHeaders.Converter[Headers] = new TraceHeaders.Converter[Headers] {
