@@ -24,7 +24,13 @@ object TracedProducer {
               .fromList(records.records.map(_.topic).toList)
               .fold(Applicative[G].unit)(topics => Trace[G].put("topics", AttributeValue.StringList(topics))) >> L
               .lift(
-                producer.produce(ProducerRecords(records.records.map(_.withHeaders(msgHeaders)), records.passthrough))
+                producer
+                  .produce(
+                    ProducerRecords(
+                      records.records.map(rec => rec.withHeaders(rec.headers.concat(msgHeaders))),
+                      records.passthrough
+                    )
+                  )
               )
               .map(L.lift)
           }
