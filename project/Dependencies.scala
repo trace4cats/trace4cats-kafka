@@ -6,9 +6,9 @@ object Dependencies {
     val scala213 = "2.13.8"
     val scala3 = "3.1.3"
 
-    val trace4cats = "0.14.0"
+    val trace4cats = "0.14.2"
 
-    val fs2Kafka = "2.5.0"
+    val fs2Kafka = "3.0.0"
 
     val kindProjector = "0.13.2"
     val betterMonadicFor = "0.3.1"
