@@ -15,11 +15,11 @@ object TracedProducer {
     toHeaders: ToHeaders = ToHeaders.standard
   )(implicit L: Lift[F, G]): KafkaProducer[G, K, V] =
     new KafkaProducer[G, K, V] {
-      override def produce[P](records: ProducerRecords[P, K, V]): G[G[ProducerResult[P, K, V]]] =
+      override def produce(records: ProducerRecords[K, V]): G[G[ProducerResult[K, V]]] =
         Trace[G].span("kafka.send", SpanKind.Producer) {
           Trace[G].headers(toHeaders).flatMap { traceHeaders =>
             NonEmptyList
-              .fromList(records.records.map(_.topic).toList)
+              .fromList(records.map(_.topic).toList)
               .fold(Applicative[G].unit)(topics => Trace[G].put("topics", AttributeValue.StringList(topics))) >>
               L.lift(producer.produce(addHeaders(traceHeaders)(records))).map(L.lift)
           }
@@ -28,8 +28,8 @@ object TracedProducer {
 
   private[kafka] def addHeaders[P, K, V](
     traceHeaders: TraceHeaders
-  )(records: ProducerRecords[P, K, V]): ProducerRecords[P, K, V] = {
+  )(records: ProducerRecords[K, V]): ProducerRecords[K, V] = {
     val msgHeaders = KafkaHeaders.converter.to(traceHeaders)
-    ProducerRecords(records.records.map(r => r.withHeaders(r.headers.concat(msgHeaders))), records.passthrough)
+    ProducerRecords(records.map(r => r.withHeaders(r.headers.concat(msgHeaders))))
   }
 }
