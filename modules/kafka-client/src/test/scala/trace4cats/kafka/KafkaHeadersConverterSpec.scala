@@ -29,7 +29,7 @@ class KafkaHeadersConverterSpec extends AnyFlatSpec with ScalaCheckDrivenPropert
     val prOrig = ProducerRecords(List(ProducerRecord("topic", "key", "vale").withHeaders(headers)))
     val pr = TracedProducer.addHeaders(traceHeaders)(prOrig)
 
-    val headersActual = pr.records.toList.flatMap(_.headers.toChain.toList)
+    val headersActual = pr.toList.flatMap(_.headers.toChain.toList)
     val headersExpected = List(
       Header("header1", "value1"),
       Header("header2", "value2"),
