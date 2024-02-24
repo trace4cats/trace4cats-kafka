@@ -10,7 +10,7 @@ object Dependencies {
 
     val fs2Kafka = "3.0.1"
 
-    val kindProjector = "0.13.2"
+    val kindProjector = "0.13.3"
     val betterMonadicFor = "0.3.1"
   }
 
