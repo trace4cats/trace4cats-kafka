@@ -1,9 +1,3 @@
-ThisBuild / scalaVersion := Dependencies.Versions.scala213
-ThisBuild / crossScalaVersions := Seq(
-  Dependencies.Versions.scala213,
-  Dependencies.Versions.scala212,
-  Dependencies.Versions.scala3
-)
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("8"), JavaSpec.temurin("17"))
 
