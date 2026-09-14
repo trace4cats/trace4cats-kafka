@@ -63,9 +63,10 @@ object TracedProducer {
   // }
 
   private[kafka] def addHeaders[P, K, V](
-    traceHeaders: TraceHeaders
+      traceHeaders: TraceHeaders
   )(records: ProducerRecords[K, V]): ProducerRecords[K, V] = {
     val msgHeaders = KafkaHeaders.converter.to(traceHeaders)
     ProducerRecords(records.map(r => r.withHeaders(r.headers.concat(msgHeaders))))
   }
+
 }

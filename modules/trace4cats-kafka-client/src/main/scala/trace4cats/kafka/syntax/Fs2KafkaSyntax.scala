@@ -2,12 +2,13 @@ package trace4cats.kafka.syntax
 
 import cats.Functor
 import cats.effect.kernel.MonadCancelThrow
+
 import fs2.Stream
 import fs2.kafka.CommittableConsumerRecord
+import trace4cats._
 import trace4cats.context.Provide
 import trace4cats.fs2.TracedStream
 import trace4cats.kafka.TracedConsumer
-import trace4cats._
 
 trait Fs2KafkaSyntax {
 
@@ -28,19 +29,20 @@ trait Fs2KafkaSyntax {
   // }
 
   implicit class ConsumerSyntax[F[_], K, V](consumerStream: Stream[F, CommittableConsumerRecord[F, K, V]]) {
+
     def inject[G[_]](ep: EntryPoint[F])(implicit
-      P: Provide[F, G, Span[F]],
-      F: MonadCancelThrow[F],
-      G: Functor[G],
-      T: Trace[G],
+        P: Provide[F, G, Span[F]],
+        F: MonadCancelThrow[F],
+        G: Functor[G],
+        T: Trace[G]
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
       TracedConsumer.inject[F, G, K, V](consumerStream)(ep.toKleisli)
 
     def trace[G[_]](k: ResourceKleisli[F, SpanParams, Span[F]])(implicit
-      P: Provide[F, G, Span[F]],
-      F: MonadCancelThrow[F],
-      G: Functor[G],
-      T: Trace[G],
+        P: Provide[F, G, Span[F]],
+        F: MonadCancelThrow[F],
+        G: Functor[G],
+        T: Trace[G]
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
       TracedConsumer.inject[F, G, K, V](consumerStream)(k)
 
@@ -63,4 +65,5 @@ trait Fs2KafkaSyntax {
     // ): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
     //   TracedConsumer.injectK[F, G, K, V](consumerStream)(k)
   }
+
 }
