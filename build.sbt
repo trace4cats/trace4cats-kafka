@@ -1,32 +1,13 @@
-lazy val commonSettings = Seq(
-  Compile / compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-  scalacOptions += {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) => "-Wconf:any:wv"
-      case _ => "-Wconf:any:v"
-    }
-  },
-  Test / fork := true,
-  resolvers ++= Resolver.sonatypeOssRepos("releases"),
-)
+ThisBuild / organization           := "io.janstenpickle"
+ThisBuild / versionPolicyIntention := Compatibility.None
 
-lazy val noPublishSettings =
-  commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None, publish / skip := true)
+addCommandAlias("ci-test", "fix --check; versionPolicyCheck; mdoc; publishLocal; +test")
+addCommandAlias("ci-docs", "github; mdoc; headerCreateAll")
+addCommandAlias("ci-publish", "versionCheck; github; ci-release")
 
-lazy val publishSettings = commonSettings ++ Seq(
-  publishMavenStyle := true,
-  pomIncludeRepository := { _ =>
-    false
-  },
-  Test / publishArtifact := false
-)
+lazy val documentation = project
+  .enablePlugins(MdocPlugin)
+  .dependsOn(`trace4cats-kafka-client`)
 
-lazy val root = (project in file("."))
-  .settings(noPublishSettings)
-  .settings(name := "Trace4Cats Kafka")
-  .aggregate(`kafka-client`)
-
-lazy val `kafka-client` =
-  (project in file("modules/kafka-client"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-kafka-client")
+lazy val `trace4cats-kafka-client` = module
+  .settings(Test / fork := true)
