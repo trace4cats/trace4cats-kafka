@@ -1,29 +1,26 @@
 # Trace4Cats Kafka integration layer
 
-Integration for Trace4Cats and FS2 Kafka
+@DESCRIPTION@
 
----
-
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
+```scala mdoc:toc
+```
 
 ## Installation
 
 Add the following line to your `build.sbt` file:
 
 ```sbt
-libraryDependencies += "io.janstenpickle" %% "trace4cats-kafka-client" % "0.14.3"
+libraryDependencies += "@ORGANIZATION@" %% "trace4cats-kafka-client" % "@VERSION@"
 ```
 
-The library is published for Scala versions: `2.13` and `3`.
+The library is published for Scala versions: @SUPPORTED_SCALA_VERSIONS@.
 
 ## Usage
 
 Tracing a consumer stream continues the trace from the headers of each record and adds a
 `kafka.receive` span:
 
-```scala
+```scala mdoc:silent
 import cats.data.Kleisli
 import cats.effect.IO
 import fs2.Stream
