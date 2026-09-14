@@ -4,7 +4,7 @@ import cats.Functor
 import cats.effect.kernel.MonadCancelThrow
 import cats.syntax.functor._
 import fs2.Stream
-import fs2.kafka.{CommittableConsumerRecord, CommittableOffset}
+import fs2.kafka.{CommittableConsumerRecord, Timestamp}
 import trace4cats.context.Provide
 import trace4cats.fs2.TracedStream
 import trace4cats.fs2.syntax.Fs2StreamSyntax
@@ -24,30 +24,31 @@ object TracedConsumer extends Fs2StreamSyntax {
         Trace[G]
           .putAll(
             "topic" -> record.record.topic,
-            "consumer.group" -> AttributeValue.StringValue(record.offset.consumerGroupId.getOrElse("")),
-            "create.time" -> AttributeValue.LongValue(record.record.timestamp.createTime.getOrElse(0L)),
-            "log.append.time" -> AttributeValue.LongValue(record.record.timestamp.logAppendTime.getOrElse(0L)),
+            "create.time" -> AttributeValue.LongValue(createTime(record.record.timestamp)),
+            "log.append.time" -> AttributeValue.LongValue(logAppendTime(record.record.timestamp)),
           )
           .as(record)
       }
 
-  def injectK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow: Trace, K, V](
-    stream: Stream[F, CommittableConsumerRecord[F, K, V]]
-  )(
-    k: ResourceKleisli[F, SpanParams, Span[F]]
-  )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, CommittableConsumerRecord[G, K, V]] = {
-    def liftConsumerRecord(record: CommittableConsumerRecord[F, K, V]): CommittableConsumerRecord[G, K, V] =
-      CommittableConsumerRecord[G, K, V](
-        record.record,
-        CommittableOffset(
-          record.offset.topicPartition,
-          record.offset.offsetAndMetadata,
-          record.offset.consumerGroupId,
-          _ => P.lift(record.offset.commit)
-        )
-      )
-
-    inject[F, G, K, V](stream)(k).liftTrace[G].map(liftConsumerRecord)
+  private def createTime(timestamp: Timestamp): Long = timestamp match {
+    case Timestamp.CreateTime(value) => value
+    case _ => 0L
   }
+
+  private def logAppendTime(timestamp: Timestamp): Long = timestamp match {
+    case Timestamp.LogAppendTime(value) => value
+    case _ => 0L
+  }
+
+  // Lifting the stream into `G` means rebuilding each record's `CommittableOffset` in `G`, and
+  // fs2-kafka 4.0.0 made that constructor package-private. Uncomment and release as soon as
+  // https://github.com/typelevel/fs2-kafka/pull/1522, which adds `mapK`, is merged and released.
+  //
+  // def injectK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow: Trace, K, V](
+  //   stream: Stream[F, CommittableConsumerRecord[F, K, V]]
+  // )(
+  //   k: ResourceKleisli[F, SpanParams, Span[F]]
+  // )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
+  //   inject[F, G, K, V](stream)(k).liftTrace[G].map(_.mapK(P.liftK))
 
 }
