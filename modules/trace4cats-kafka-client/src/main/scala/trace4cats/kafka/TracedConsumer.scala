@@ -67,15 +67,11 @@ object TracedConsumer extends Fs2StreamSyntax {
     case _                              => 0L
   }
 
-  // Lifting the stream into `G` means rebuilding each record's `CommittableOffset` in `G`, and
-  // fs2-kafka 4.0.0 made that constructor package-private. Uncomment and release as soon as
-  // https://github.com/typelevel/fs2-kafka/pull/1522, which adds `mapK`, is merged and released.
-  //
-  // def injectK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow: Trace, K, V](
-  //   stream: Stream[F, CommittableConsumerRecord[F, K, V]]
-  // )(
-  //   k: ResourceKleisli[F, SpanParams, Span[F]]
-  // )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
-  //   inject[F, G, K, V](stream)(k).liftTrace[G].map(_.mapK(P.liftK))
+  def injectK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow: Trace, K, V](
+      stream: Stream[F, CommittableConsumerRecord[F, K, V]]
+  )(
+      k: ResourceKleisli[F, SpanParams, Span[F]]
+  )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
+    inject[F, G, K, V](stream)(k).liftTrace[G].map(_.mapK(P.liftK))
 
 }
