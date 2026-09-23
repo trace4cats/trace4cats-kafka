@@ -26,7 +26,7 @@ import trace4cats.TraceHeaders
 
 object TracedProducer {
 
-  // fs2-kafka 4.0.0 folded the transactional methods into `KafkaProducer`, and two of them cannot
+  // fs2-kafka 4.1.0 folded the transactional methods into `KafkaProducer`, and two of them cannot
   // be implemented by a wrapper: `withSerializers` takes serializers in `G` and
   // `produceAndCommitTransactionally` takes offsets in `G`, both of which have to reach a producer
   // running in `F`. Uncomment and release as soon as
