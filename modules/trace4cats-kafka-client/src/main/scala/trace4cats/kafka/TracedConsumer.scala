@@ -68,7 +68,7 @@ object TracedConsumer extends Fs2StreamSyntax {
   }
 
   // Lifting the stream into `G` means rebuilding each record's `CommittableOffset` in `G`, and
-  // fs2-kafka 4.0.0 made that constructor package-private. Uncomment and release as soon as
+  // fs2-kafka 4.1.1 made that constructor package-private. Uncomment and release as soon as
   // https://github.com/typelevel/fs2-kafka/pull/1522, which adds `mapK`, is merged and released.
   //
   // def injectK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow: Trace, K, V](
