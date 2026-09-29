@@ -24,6 +24,7 @@ package trace4cats.kafka
 import cats.Functor
 import cats.data.WriterT
 import cats.effect.kernel.MonadCancelThrow
+import cats.syntax.applicativeError._
 import cats.syntax.functor._
 
 import fs2.Stream
@@ -47,13 +48,26 @@ object TracedConsumer extends Fs2StreamSyntax {
       k: ResourceKleisli[F, SpanParams, Span[F]]
   )(implicit P: Provide[F, G, Span[F]]): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
     stream
-      .traceContinue(k, "kafka.receive", SpanKind.Consumer) { record =>
+      .evalMapAccumulate(Map.empty[KafkaCommitter[F], String]) { case (groups, record) =>
+        val committer = record.offset.committer
+
+        groups.get(committer) match {
+          case Some(group) => MonadCancelThrow[F].pure((groups, (record, group)))
+          case None        =>
+            committer.metadata.map(_.groupId).handleError(_ => "").map { group =>
+              (groups.updated(committer, group), (record, group))
+            }
+        }
+      }
+      .map(_._2)
+      .traceContinue(k, "kafka.receive", SpanKind.Consumer) { case (record, _) =>
         KafkaHeaders.converter.from(record.record.headers)
       }
-      .evalMapTrace { record =>
+      .evalMapTrace { case (record, group) =>
         Trace[G]
           .putAll(
             "topic"           -> record.record.topic,
+            "consumer.group"  -> AttributeValue.StringValue(group),
             "create.time"     -> AttributeValue.LongValue(createTime(record.record.timestamp)),
             "log.append.time" -> AttributeValue.LongValue(logAppendTime(record.record.timestamp))
           )
