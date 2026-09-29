@@ -21,9 +21,13 @@
 
 package trace4cats.kafka
 
+import scala.annotation.nowarn
+
 import cats.data.Kleisli
+import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.effect.Ref
+import cats.effect.Resource
 import cats.effect.unsafe.implicits.global
 
 import fs2.Stream
@@ -31,15 +35,69 @@ import fs2.kafka.CommittableConsumerRecord
 import fs2.kafka.CommittableOffsetBatch
 import fs2.kafka.ConsumerRecord
 import fs2.kafka.TestCommittables
+import org.apache.kafka.clients.consumer.ConsumerGroupMetadata
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
 import org.scalatest.flatspec.AnyFlatSpec
 import trace4cats.EntryPoint
 import trace4cats.Span
+import trace4cats.kernel.ErrorHandler
+import trace4cats.model.AttributeValue
+import trace4cats.model.Link
+import trace4cats.model.SpanKind
+import trace4cats.model.SpanStatus
 
 class TracedConsumerSpec extends AnyFlatSpec {
 
   type Traced[A] = Kleisli[IO, Span[IO], A]
+
+  @nowarn("cat=deprecation")
+  val metadata = new ConsumerGroupMetadata("my-group")
+
+  behavior.of("TracedConsumer.inject")
+
+  it should "set consumer.group from the committer metadata, fetched once per committer" in {
+    val partition = new TopicPartition("topic", 0)
+
+    val test = for {
+      groups  <- Ref.of[IO, List[Option[Any]]](Nil)
+      fetches <- Ref.of[IO, Int](0)
+      span    <- IO.pure[Span[IO]](new Span[IO] {
+                private val noop = Span.noopInstance[IO]
+
+                override def context                                                         = noop.context
+                override def put(key: String, value: AttributeValue)                         = noop.put(key, value)
+                override def putAll(fields: Map[String, AttributeValue])                     = noop.putAll(fields)
+                override def setStatus(spanStatus: SpanStatus)                               = noop.setStatus(spanStatus)
+                override def addLink(link: Link)                                             = noop.addLink(link)
+                override def addLinks(links: NonEmptyList[Link])                             = noop.addLinks(links)
+                override def child(name: String, kind: SpanKind)                             = noop.child(name, kind)
+                override def child(name: String, kind: SpanKind, errorHandler: ErrorHandler) =
+                  noop.child(name, kind, errorHandler)
+
+                override def putAll(fields: (String, AttributeValue)*) =
+                  groups.update(fields.toMap.get("consumer.group").map(_.value.value) :: _)
+              })
+      committer = TestCommittables.committer[IO](_ => IO.unit, fetches.update(_ + 1).as(metadata))
+      records   = List(1L, 2L, 3L).map { offset =>
+                  CommittableConsumerRecord(
+                    ConsumerRecord(partition.topic, partition.partition, offset, "key", "value"),
+                    TestCommittables.offset(partition, offset, committer)
+                  )
+                }
+      _ <- TracedConsumer
+             .inject[IO, Traced, String, String](Stream.emits(records))(Kleisli(_ => Resource.pure[IO, Span[IO]](span)))
+             .run
+             .compile
+             .drain
+      recorded <- groups.get
+      count    <- fetches.get
+    } yield assertResult((List.fill(3)(Some("my-group")), 1)) {
+      (recorded, count)
+    }
+
+    test.unsafeRunSync()
+  }
 
   behavior.of("TracedConsumer.injectK")
 
@@ -49,7 +107,7 @@ class TracedConsumerSpec extends AnyFlatSpec {
 
     val test = for {
       commits  <- Ref.of[IO, List[Map[TopicPartition, OffsetAndMetadata]]](Nil)
-      committer = TestCommittables.committer[IO](offsets => commits.update(offsets :: _), IO.never)
+      committer = TestCommittables.committer[IO](offsets => commits.update(offsets :: _), IO.pure(metadata))
       records   = List((partition0, 1L), (partition1, 5L), (partition0, 2L)).map { case (partition, offset) =>
                   CommittableConsumerRecord(
                     ConsumerRecord(partition.topic, partition.partition, offset, "key", "value"),
