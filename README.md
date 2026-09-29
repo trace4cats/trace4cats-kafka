@@ -13,7 +13,7 @@ Integration for Trace4Cats and FS2 Kafka
 Add the following line to your `build.sbt` file:
 
 ```sbt
-libraryDependencies += "io.janstenpickle" %% "trace4cats-kafka-client" % "0.14.3"
+libraryDependencies += "io.janstenpickle" %% "trace4cats-kafka-client" % "0.15.0-RC1"
 ```
 
 The library is published for Scala versions: `2.13` and `3`.
