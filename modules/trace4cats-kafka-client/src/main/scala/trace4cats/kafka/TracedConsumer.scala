@@ -22,7 +22,6 @@
 package trace4cats.kafka
 
 import cats.Functor
-import cats.data.WriterT
 import cats.effect.kernel.MonadCancelThrow
 import cats.syntax.applicativeError._
 import cats.syntax.functor._
@@ -30,7 +29,6 @@ import cats.syntax.functor._
 import fs2.Stream
 import fs2.kafka.CommittableConsumerRecord
 import fs2.kafka.KafkaCommitter
-import fs2.kafka.LiftedCommittableOffset
 import fs2.kafka.Timestamp
 import trace4cats.ResourceKleisli
 import trace4cats.Span
@@ -88,24 +86,7 @@ object TracedConsumer extends Fs2StreamSyntax {
       stream: Stream[F, CommittableConsumerRecord[F, K, V]]
   )(
       k: ResourceKleisli[F, SpanParams, Span[F]]
-  )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, CommittableConsumerRecord[G, K, V]] = {
-    val liftK = P.liftK
-
-    WriterT(
-      inject[F, G, K, V](stream)(k)
-        .liftTrace[G]
-        .run
-        .mapAccumulate(Map.empty[KafkaCommitter[F], KafkaCommitter[G]]) { case (committers, (span, record)) =>
-          val committer = committers.getOrElse(record.offset.committer, record.offset.committer.mapK(liftK))
-          val offset    = LiftedCommittableOffset(record.offset, committer)
-
-          (
-            committers.updated(record.offset.committer, committer),
-            (span, CommittableConsumerRecord(record.record, offset))
-          )
-        }
-        .map(_._2)
-    )
-  }
+  )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
+    inject[F, G, K, V](stream)(k).liftTrace[G].map(_.mapK(P.liftK))
 
 }
